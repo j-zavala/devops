@@ -1,0 +1,21 @@
+# Ignore Terraform state files
+terraform.tfstate
+terraform.tfstate.backup
+
+# Ignore the Terraform configuration lock file
+.terraform.lock.hcl
+
+# Ignore the .terraform directory
+.terraform/
+
+# Ignore any crash log files created by Terraform
+crash.log
+
+# Ignore sensitive information files (if any)
+*.pem
+*.key
+
+# Ignore other system-specific files
+.DS_Store
+.idea/
+*.swp
