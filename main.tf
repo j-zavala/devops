@@ -76,7 +76,9 @@ resource "aws_instance" "private_instance" {
     Name = "${var.app_name}-private-ec2-${count.index + 1}"
   }
 
-  # user_data = file("private_ec2_nginx_setup.sh.tpl")
+  user_data = templatefile("private_ec2_nginx_setup.sh.tpl", {
+    private_instance_name = "${var.app_name}-private-ec2-${count.index + 1}"
+  })
 }
 
 resource "aws_iam_role" "private_ec2_role" {
