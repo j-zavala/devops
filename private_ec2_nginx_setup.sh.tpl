@@ -18,7 +18,7 @@ sudo bash -c 'cat > /usr/share/nginx/html/index.html << "EOL"
 <body>
     <div class="container">
         <h1>Hello from the Private Instance</h1>
-        <p>This is a simple web page served from the private instance.</p>
+        <p>This is a simple web page served from the ${private_instance_name}</p>
     </div>
 </body>
 </html>
