@@ -59,13 +59,13 @@ resource "aws_security_group" "load_balancer_sg" {
 # =========================================
 
 # Private Security Group Rules
-resource "aws_vpc_security_group_ingress_rule" "private_allow_http_inbound_from_public_subnet" {
+resource "aws_vpc_security_group_ingress_rule" "private_allow_http_inbound_from_lb" {
   security_group_id            = aws_security_group.private_sg.id
   referenced_security_group_id = aws_security_group.load_balancer_sg.id
   from_port                    = 80
   to_port                      = 80
   ip_protocol                  = "tcp"
-  description                  = "Allow HTTP inbound traffic from public subnet"
+  description                  = "Allow HTTP inbound traffic from load balancer"
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_allow_all_outbound" {
@@ -109,9 +109,7 @@ resource "aws_instance" "private_instance" {
     Name = "${var.app_name}-private-ec2-${count.index + 1}"
   }
 
-  user_data = templatefile("private_ec2_nginx_setup.sh.tpl", {
-    private_instance_name = "${var.app_name}-private-ec2-${count.index + 1}"
-  })
+  user_data = file("private_ec2_docker_setup.sh.tpl")
 }
 
 # =========================================
@@ -134,10 +132,28 @@ resource "aws_iam_role" "private_ec2_role" {
   })
 }
 
-# Attach the role to the policy
-resource "aws_iam_role_policy_attachment" "private_ec2_policy_attachment" {
+# Attach the AmazonEC2ContainerRegistryReadOnly policy to the role
+resource "aws_iam_role_policy_attachment" "ecr_readonly_policy_attachment" {
+  role       = aws_iam_role.private_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+# Attach the AmazonSSMManagedInstanceCore policy to the role
+resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   role       = aws_iam_role.private_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# Attach the AmazonEC2RoleforSSM policy to the role
+resource "aws_iam_role_policy_attachment" "ssm_role_policy_attachment" {
+  role       = aws_iam_role.private_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+}
+
+# Attach the CloudWatchAgentServerPolicy to the role
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_policy_attachment" {
+  role       = aws_iam_role.private_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # Attach instance to the role
@@ -164,6 +180,16 @@ resource "aws_lb_target_group" "target_group" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = module.vpc.vpc_id
+
+  health_check {
+    path                = "/"
+    port                = "80"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
 }
 
 # Attach Instances to Target Group
@@ -185,3 +211,7 @@ resource "aws_lb_listener" "listener" {
     target_group_arn = aws_lb_target_group.target_group.arn
   }
 }
+
+# resource "aws_ecr_repository" "cwc-ecr" {
+#   name = "${var.app_name}-ecr"
+# }
