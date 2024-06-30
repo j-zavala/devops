@@ -150,12 +150,6 @@ resource "aws_iam_role_policy_attachment" "ssm_role_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
 }
 
-# Attach the CloudWatchAgentServerPolicy to the role
-resource "aws_iam_role_policy_attachment" "cloudwatch_agent_policy_attachment" {
-  role       = aws_iam_role.private_ec2_role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
-}
-
 # Attach instance to the role
 resource "aws_iam_instance_profile" "private_ec2_instance_profile" {
   name = "${var.app_name}-private-ec2-instance-profile"
@@ -211,7 +205,3 @@ resource "aws_lb_listener" "listener" {
     target_group_arn = aws_lb_target_group.target_group.arn
   }
 }
-
-# resource "aws_ecr_repository" "cwc-ecr" {
-#   name = "${var.app_name}-ecr"
-# }
