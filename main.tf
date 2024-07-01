@@ -103,7 +103,8 @@ resource "aws_instance" "private_instance" {
   subnet_id                   = module.vpc.private_subnet_ids[count.index]
   associate_public_ip_address = false
   vpc_security_group_ids      = [aws_security_group.private_sg.id]
-  iam_instance_profile        = aws_iam_instance_profile.private_ec2_instance_profile.name
+  // allows us to use SSM to connect to the instance
+  iam_instance_profile = aws_iam_instance_profile.private_ec2_instance_profile.name
 
   tags = {
     Name = "${var.app_name}-private-ec2-${count.index + 1}"
