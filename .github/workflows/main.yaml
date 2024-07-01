@@ -20,12 +20,14 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Log into AWS ECR
         id: login-aws-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: private
       - name: Build and Push Tagged Docker Image to AWS ECR
         env:
           ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPO }}
-          IMAGE_TAG: ${{ github.run_id }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
