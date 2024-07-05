@@ -54,16 +54,6 @@ resource "aws_security_group" "load_balancer_sg" {
   }
 }
 
-# resource "aws_security_group" "db_sg" {
-#   name        = "${var.app_name}-db-sg"
-#   description = "Allow PostgreSQL from private subnet, all outbound traffic"
-#   vpc_id      = module.vpc.vpc_id
-
-#   tags = {
-#     Name = "${var.app_name}-db-sg"
-#   }
-# }
-
 # =========================================
 # Security Group Rules
 # =========================================
@@ -103,15 +93,6 @@ resource "aws_vpc_security_group_egress_rule" "lb_allow_all_outbound_to_private_
   description       = "Allow all outbound traffic to private instances"
 }
 
-# # RDS Security Group Rules
-# resource "aws_vpc_security_group_ingress_rule" "db_allow_postgres_from_private_subnet" {
-#   security_group_id            = aws_security_group.db_sg.id
-#   referenced_security_group_id = aws_security_group.private_sg.id
-#   from_port                    = 5432
-#   to_port                      = 5432
-#   ip_protocol                  = "tcp"
-#   description                  = "Allow PostgreSQL inbound traffic from private subnet"
-# }
 # =========================================
 # EC2 Instances
 # =========================================
@@ -127,10 +108,10 @@ resource "aws_instance" "private_instance" {
 
   tags = {
     Name = "${var.app_name}-private-ec2-${count.index + 1}"
-    Role = "backend-frontend" # Tag to identify the role
+    # Role = "backend-frontend" # Tag to identify the role
   }
 
-  # user_data = file("private_ec2_docker_setup.sh.tpl")
+  user_data = file("private_ec2_docker_setup.sh.tpl")
 }
 
 # =========================================
@@ -189,9 +170,9 @@ resource "aws_lb" "load_balancer" {
 }
 
 
-# Target groups for frontend and backend
-resource "aws_lb_target_group" "frontend_target_group" {
-  name     = "${var.app_name}-frontend-target-group"
+# ALB Target groups
+resource "aws_lb_target_group" "target_group" {
+  name     = "${var.app_name}-target-group"
   port     = 80
   protocol = "HTTP"
   vpc_id   = module.vpc.vpc_id
@@ -207,37 +188,37 @@ resource "aws_lb_target_group" "frontend_target_group" {
   }
 }
 
-resource "aws_lb_target_group" "backend_target_group" {
-  name     = "${var.app_name}-backend-target-group"
-  port     = 3005
-  protocol = "HTTP"
-  vpc_id   = module.vpc.vpc_id
+# resource "aws_lb_target_group" "backend_target_group" {
+#   name     = "${var.app_name}-backend-target-group"
+#   port     = 3005
+#   protocol = "HTTP"
+#   vpc_id   = module.vpc.vpc_id
 
-  health_check {
-    path                = "/api/health"
-    port                = "3005"
-    protocol            = "HTTP"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-  }
-}
+#   health_check {
+#     path                = "/api/health"
+#     port                = "3005"
+#     protocol            = "HTTP"
+#     interval            = 30
+#     timeout             = 5
+#     healthy_threshold   = 2
+#     unhealthy_threshold = 2
+#   }
+# }
 
 # Attach Instances to Target Group
-resource "aws_lb_target_group_attachment" "frontend_instance_attachment" {
+resource "aws_lb_target_group_attachment" "target_group_attachment" {
   count            = length(aws_instance.private_instance)
-  target_group_arn = aws_lb_target_group.frontend_target_group.arn
+  target_group_arn = aws_lb_target_group.target_group.arn
   target_id        = aws_instance.private_instance[count.index].id
   port             = 80
 }
 
-resource "aws_lb_target_group_attachment" "backend_instance_attachment" {
-  count            = length(aws_instance.private_instance)
-  target_group_arn = aws_lb_target_group.backend_target_group.arn
-  target_id        = aws_instance.private_instance[count.index].id
-  port             = 3005
-}
+# resource "aws_lb_target_group_attachment" "backend_instance_attachment" {
+#   count            = length(aws_instance.private_instance)
+#   target_group_arn = aws_lb_target_group.backend_target_group.arn
+#   target_id        = aws_instance.private_instance[count.index].id
+#   port             = 3005
+# }
 
 # Listener
 resource "aws_lb_listener" "listener" {
@@ -247,51 +228,23 @@ resource "aws_lb_listener" "listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend_target_group.arn
+    target_group_arn = aws_lb_target_group.target_group.arn
   }
 }
 
-# Listener Rule for API Path
-resource "aws_lb_listener_rule" "api_rule" {
-  listener_arn = aws_lb_listener.listener.arn
-  priority     = 100
+# # Listener Rule for API Path
+# resource "aws_lb_listener_rule" "api_rule" {
+#   listener_arn = aws_lb_listener.listener.arn
+#   priority     = 100
 
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.backend_target_group.arn
-  }
+#   action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.backend_target_group.arn
+#   }
 
-  condition {
-    path_pattern {
-      values = ["/api/*"]
-    }
-  }
-}
-
-# =========================================
-# RDS PostgreSQL Database
-# =========================================
-# resource "aws_db_subnet_group" "main" {
-#   name       = "${var.app_name}-db-subnet-group"
-#   subnet_ids = module.vpc.private_subnet_ids
-# }
-
-# resource "aws_db_instance" "relational_db" {
-#   allocated_storage      = 20
-#   storage_type           = "gp2"
-#   engine                 = "postgres"
-#   engine_version         = "16.3"
-#   instance_class         = "db.t3.micro"
-#   db_name                = var.db_name
-#   username               = var.db_username
-#   password               = var.db_password
-#   parameter_group_name   = "default.postgres16"
-#   skip_final_snapshot    = true
-#   publicly_accessible    = false
-#   vpc_security_group_ids = [aws_security_group.db_sg.id]
-#   db_subnet_group_name   = aws_db_subnet_group.main.name
-
-#   tags = {
-#     Name = "${var.app_name}-rds"
+#   condition {
+#     path_pattern {
+#       values = ["/api/*"]
+#     }
 #   }
 # }
