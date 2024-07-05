@@ -14,6 +14,7 @@ crash.log
 # Ignore sensitive information files (if any)
 *.pem
 *.key
+terraform.tfvars
 
 # Ignore other system-specific files
 .DS_Store
