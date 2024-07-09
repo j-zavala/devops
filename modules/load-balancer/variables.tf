@@ -15,5 +15,6 @@ variable "public_subnet_ids" {
 }
 
 variable "instance_ids" {
-  type = list(string)
+  type        = list(string)
+  description = "List of EC2 instance IDs to attach to the target group"
 }
