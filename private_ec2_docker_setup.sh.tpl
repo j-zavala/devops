@@ -3,12 +3,20 @@
 exec > /var/log/user-data.log 2>&1
 
 # Update packages and install Docker
-sudo yum update -y
+sudo dnf update -y
 sudo dnf install -y docker
 sudo systemctl enable docker
 sudo systemctl start docker
+
+# Add ec2-user and ssm-user to the docker group
 sudo usermod -aG docker ec2-user
-# sudo chmod 660 /var/run/docker.sock
+sudo usermod -aG docker ssm-user
+
+# Ensure permissions are properly set
+sudo chmod 666 /var/run/docker.sock
+
+# Restart the Docker service to ensure all changes take effect
+sudo systemctl restart docker
 
 # # Install jq
 # sudo dnf install -y jq
