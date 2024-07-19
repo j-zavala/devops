@@ -16,28 +16,33 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-resource "aws_db_security_group_ingress_rule" "rds_sg_ingress_rule" {
-  security_group_id = aws_security_group.rds_sg.id
-  ip_protocol       = "tcp"
-  from_port         = 5432
-  to_port           = 5432
-  security_groups   = [var.private_instance_sg_id]
+resource "aws_vpc_security_group_ingress_rule" "rds_sg_ingress_rule" {
+  security_group_id            = aws_security_group.rds_sg.id
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
+  referenced_security_group_id = var.private_instance_sg_id
+  description                  = "Allow incoming connections from EC2 instances"
 
   tags = {
     Name = "${var.app_name}-rds-sg-ingress-rule"
   }
 }
 
-resource "aws_db_security_group_rule" "rds_sg_egress_rule" {
+resource "aws_vpc_security_group_egress_rule" "rds_sg_egress_rule" {
   security_group_id = aws_security_group.rds_sg.id
-  security_groups   = [var.private_instance_sg_id]
+  from_port         = 0
+  to_port           = 0
+  ip_protocol       = "-1"
+  description       = "Allow outgoing connections to any destination"
 
   tags = {
-    Name = "${var.app_name}-rds-sg-rule"
+    Name = "${var.app_name}-rds-sg-egress-rule"
   }
 }
 
 resource "aws_db_instance" "rds_instance" {
+  identifier             = "${var.app_name}-rds-instance"
   allocated_storage      = 10
   instance_class         = "db.t3.micro"
   engine                 = "postgres"

@@ -29,6 +29,18 @@ module "vpc" {
   private_subnet_cidr_block = var.private_subnet_cidr_block
 }
 
+# RDS
+module "rds" {
+  source = "./modules/rds"
+
+  app_name               = var.app_name
+  vpc_id                 = module.vpc.vpc_id
+  private_subnet_ids     = module.vpc.private_subnet_ids
+  private_instance_sg_id = module.ec2_instances.private_instance_sg_id
+  db_username            = var.db_username
+  db_password            = var.db_password
+}
+
 # Load Balancer
 module "load_balancer" {
   source = "./modules/load-balancer"
@@ -51,6 +63,7 @@ module "ec2_instances" {
   private_subnet_ids  = module.vpc.private_subnet_ids
   vpc_id              = module.vpc.vpc_id
   load_balancer_sg_id = aws_security_group.load_balancer_sg.id
+  rds_sg_id           = module.rds.rds_sg_id
   user_data           = var.user_data
 }
 

@@ -40,3 +40,8 @@ variable "user_data" {
   type        = string
   description = "User data script for EC2 instances"
 }
+
+variable "rds_sg_id" {
+  description = "The ID of the RDS security group"
+  type        = string
+}
