@@ -18,26 +18,14 @@ resource "aws_security_group" "rds_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "rds_sg_ingress_rule" {
   security_group_id            = aws_security_group.rds_sg.id
-  ip_protocol                  = "tcp"
+  referenced_security_group_id = var.private_instance_sg_id
   from_port                    = 5432
   to_port                      = 5432
-  referenced_security_group_id = var.private_instance_sg_id
+  ip_protocol                  = "tcp"
   description                  = "Allow incoming connections from EC2 instances"
 
   tags = {
     Name = "${var.app_name}-rds-sg-ingress-rule"
-  }
-}
-
-resource "aws_vpc_security_group_egress_rule" "rds_sg_egress_rule" {
-  security_group_id = aws_security_group.rds_sg.id
-  from_port         = 0
-  to_port           = 0
-  ip_protocol       = "-1"
-  description       = "Allow outgoing connections to any destination"
-
-  tags = {
-    Name = "${var.app_name}-rds-sg-egress-rule"
   }
 }
 

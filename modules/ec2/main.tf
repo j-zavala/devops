@@ -47,13 +47,13 @@ resource "aws_vpc_security_group_ingress_rule" "private_allow_http_inbound_from_
   description                  = "Allow HTTP inbound traffic from load balancer"
 }
 
-resource "aws_security_group_rule_egress_rule" "allow_ec2_to_postgres_rds" {
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = var.rds_sg_id
-  security_group_id        = aws_security_group.private_sg.id
-  description              = "Allow EC2 instances to connect to PostgreSQL RDS"
+resource "aws_vpc_security_group_egress_rule" "allow_ec2_to_rds" {
+  security_group_id            = aws_security_group.private_sg.id
+  referenced_security_group_id = var.rds_sg_id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
+  description                  = "Allow outbound traffic from EC2 to RDS instance"
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_allow_all_outbound" {
