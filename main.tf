@@ -39,6 +39,7 @@ module "rds" {
   private_instance_sg_id = module.ec2_instances.private_instance_sg_id
   db_username            = var.db_username
   db_password            = var.db_password
+  db_name                = var.db_name
 }
 
 # Load Balancer
@@ -65,6 +66,15 @@ module "ec2_instances" {
   load_balancer_sg_id = aws_security_group.load_balancer_sg.id
   rds_sg_id           = module.rds.rds_sg_id
   user_data           = var.user_data
+}
+
+# =========================================
+# AWS Systems Manager Parameter Store 
+# =========================================
+resource "aws_ssm_parameter" "rds_endpoint_url" {
+  name  = "/cwc/rds/endpoint"
+  type  = "String"
+  value = module.rds.rds_endpoint
 }
 
 # =========================================

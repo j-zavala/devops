@@ -54,6 +54,10 @@ resource "aws_vpc_security_group_egress_rule" "allow_ec2_to_rds" {
   to_port                      = 5432
   ip_protocol                  = "tcp"
   description                  = "Allow outbound traffic from EC2 to RDS instance"
+
+  tags = {
+    Name = "${var.app_name}-allow-ec2-to-rds-egress-rule"
+  }
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_allow_all_outbound" {
@@ -81,6 +85,34 @@ resource "aws_iam_role" "private_ec2_role" {
       }
     ]
   })
+}
+
+# IAM policy for SSM Parameter Store access
+resource "aws_iam_policy" "ssm_parameter_access" {
+  name        = "${var.app_name}-ssm-parameter-access"
+  path        = "/"
+  description = "IAM policy for accessing SSM Parameter Store"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:*:*:parameter/cwc/*"
+      },
+    ]
+  })
+}
+
+# Attach the SSM Parameter Store access policy to the role
+resource "aws_iam_role_policy_attachment" "ssm_parameter_access_attachment" {
+  role       = aws_iam_role.private_ec2_role.name
+  policy_arn = aws_iam_policy.ssm_parameter_access.arn
 }
 
 # Attach the AmazonEC2ContainerRegistryReadOnly policy to the role

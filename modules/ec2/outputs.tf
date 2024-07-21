@@ -3,7 +3,7 @@ output "instance_ids" {
   value       = aws_instance.private_instance[*].id
 }
 
-output "private_sg_id" {
+output "private_instance_sg_id" {
   description = "ID of the private security group"
   value       = aws_security_group.private_sg.id
 }
