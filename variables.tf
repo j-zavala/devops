@@ -18,6 +18,11 @@ variable "private_subnet_cidr_block" {
   description = "The CIDR block to use for the private subnet"
 }
 
+variable "rds_subnet_cidr_block" {
+  type        = string
+  description = "The CIDR block to use for the RDS subnet"
+}
+
 variable "app_name" {
   type        = string
   description = "The name of the application"

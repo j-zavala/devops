@@ -21,12 +21,14 @@ provider "aws" {
 # =========================================
 # VPC
 module "vpc" {
-  source                    = "./modules/vpc"
+  source = "./modules/vpc"
+
   app_name                  = var.app_name
   region                    = var.region
   vpc_cidr_block            = var.vpc_cidr_block
   public_subnet_cidr_block  = var.public_subnet_cidr_block
   private_subnet_cidr_block = var.private_subnet_cidr_block
+  rds_subnet_cidr_block     = var.rds_subnet_cidr_block
 }
 
 # RDS
@@ -35,7 +37,7 @@ module "rds" {
 
   app_name               = var.app_name
   vpc_id                 = module.vpc.vpc_id
-  private_subnet_ids     = module.vpc.private_subnet_ids
+  rds_subnet_id          = module.vpc.rds_subnet_id
   private_instance_sg_id = module.ec2_instances.private_instance_sg_id
   db_username            = var.db_username
   db_password            = var.db_password

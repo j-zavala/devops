@@ -37,13 +37,24 @@ resource "aws_subnet" "public_subnet" {
 
 # Private Subnets
 resource "aws_subnet" "private_subnet" {
-  count             = 3
+  count             = 2
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_subnet_cidr_block[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
     Name = "${var.app_name}-private-subnet-${count.index + 1}"
+  }
+}
+
+# RDS Subnet
+resource "aws_subnet" "rds_subnet" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.rds_subnet_cidr_block
+  availability_zone = data.aws_availability_zones.available.names[2]
+
+  tags = {
+    Name = "${var.app_name}-rds-subnet"
   }
 }
 
