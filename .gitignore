@@ -20,3 +20,4 @@ terraform.tfvars
 .DS_Store
 .idea/
 *.swp
+.terraform.tfstate.lock.info

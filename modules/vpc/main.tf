@@ -144,7 +144,31 @@ resource "aws_route_table" "private_route_table" {
 
 # Private Route Table Associations
 resource "aws_route_table_association" "private_table_association" {
-  count          = 3
+  count          = 2
   subnet_id      = aws_subnet.private_subnet[count.index].id
-  route_table_id = aws_route_table.private_route_table[count.index % 2].id
+  route_table_id = aws_route_table.private_route_table[count.index].id
+}
+
+# =========================================
+# RDS Subnet Route Table and Associations
+# =========================================
+
+# RDS Subnet Route Table
+resource "aws_route_table" "rds_route_table" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw[0].id
+  }
+
+  tags = {
+    Name = "${var.app_name}-rds-route-table"
+  }
+}
+
+# RDS Subnet Route Table Association
+resource "aws_route_table_association" "rds_table_association" {
+  subnet_id      = aws_subnet.rds_subnet.id
+  route_table_id = aws_route_table.rds_route_table.id
 }
