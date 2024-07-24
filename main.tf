@@ -37,22 +37,23 @@ module "rds" {
 
   app_name               = var.app_name
   vpc_id                 = module.vpc.vpc_id
-  rds_subnet_id          = module.vpc.rds_subnet_id
+  rds_subnet_ids         = module.vpc.rds_subnet_ids
+  rds_subnet_cidr_block  = var.rds_subnet_cidr_block
   private_instance_sg_id = module.ec2_instances.private_instance_sg_id
   db_username            = var.db_username
   db_password            = var.db_password
   db_name                = var.db_name
+  bastion_sg_id          = module.ec2_instances.bastion_sg_id
 }
 
 # Load Balancer
 module "load_balancer" {
   source = "./modules/load-balancer"
 
-  app_name            = var.app_name
-  vpc_id              = module.vpc.vpc_id
-  load_balancer_sg_id = aws_security_group.load_balancer_sg.id
-  public_subnet_ids   = module.vpc.public_subnet_ids
-  instance_ids        = module.ec2_instances.instance_ids
+  app_name          = var.app_name
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  instance_ids      = module.ec2_instances.instance_ids
 }
 
 # EC2 Instances 
@@ -65,9 +66,10 @@ module "ec2_instances" {
   instance_type       = var.instance_type
   private_subnet_ids  = module.vpc.private_subnet_ids
   vpc_id              = module.vpc.vpc_id
-  load_balancer_sg_id = aws_security_group.load_balancer_sg.id
+  rds_subnet_id       = module.vpc.rds_subnet_ids[0]
   rds_sg_id           = module.rds.rds_sg_id
   user_data           = var.user_data
+  load_balancer_sg_id = module.load_balancer.load_balancer_sg_id
 }
 
 # =========================================
@@ -79,39 +81,3 @@ resource "aws_ssm_parameter" "rds_endpoint_url" {
   value = module.rds.rds_endpoint
 }
 
-# =========================================
-# Security Groups
-# =========================================
-
-# Load Balancer Security Group
-resource "aws_security_group" "load_balancer_sg" {
-  name        = "${var.app_name}-load-balancer-sg"
-  description = "Allows inbound HTTP from internet; then, outbound to private instances for request forwarding"
-  vpc_id      = module.vpc.vpc_id
-
-  tags = {
-    Name = "${var.app_name}-load-balancer-sg"
-  }
-}
-
-# =========================================
-# Security Group Rules
-# =========================================
-
-# Load Balancer Security Group Rules
-resource "aws_vpc_security_group_ingress_rule" "lb_allow_http_inbound_from_internet" {
-  security_group_id = aws_security_group.load_balancer_sg.id
-  cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 80
-  to_port           = 80
-  ip_protocol       = "tcp"
-  description       = "Allow HTTP inbound traffic from internet"
-}
-
-
-resource "aws_vpc_security_group_egress_rule" "lb_allow_all_outbound_to_private_instances" {
-  security_group_id = aws_security_group.load_balancer_sg.id
-  cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
-  description       = "Allow all outbound traffic to private instances"
-}

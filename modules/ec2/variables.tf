@@ -31,10 +31,6 @@ variable "vpc_id" {
   description = "VPC ID where the instances and security group will be created"
 }
 
-variable "load_balancer_sg_id" {
-  type        = string
-  description = "ID of the load balancer security group"
-}
 
 variable "user_data" {
   type        = string
@@ -44,4 +40,14 @@ variable "user_data" {
 variable "rds_sg_id" {
   description = "The ID of the RDS security group"
   type        = string
+}
+
+variable "rds_subnet_id" {
+  type        = string
+  description = "The ID of the RDS subnet where the bastion host will be placed"
+}
+
+variable "load_balancer_sg_id" {
+  type        = string
+  description = "ID of the load balancer security group"
 }

@@ -18,6 +18,19 @@ resource "aws_instance" "private_instance" {
   user_data = file(var.user_data)
 }
 
+resource "aws_instance" "bastion_host" {
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = var.rds_subnet_id
+  associate_public_ip_address = false
+  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.private_ec2_instance_profile.name
+
+  tags = {
+    Name = "${var.app_name}-bastion-host"
+  }
+}
+
 # =========================================
 # Security Groups
 # =========================================
@@ -30,6 +43,16 @@ resource "aws_security_group" "private_sg" {
 
   tags = {
     Name = "${var.app_name}-private-sg"
+  }
+}
+
+resource "aws_security_group" "bastion_sg" {
+  name        = "${var.app_name}-bastion-sg"
+  description = "Security group for bastion host"
+  vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.app_name}-bastion-sg"
   }
 }
 
@@ -47,7 +70,7 @@ resource "aws_vpc_security_group_ingress_rule" "private_allow_http_inbound_from_
   description                  = "Allow HTTP inbound traffic from load balancer"
 }
 
-resource "aws_vpc_security_group_egress_rule" "allow_ec2_to_rds" {
+resource "aws_vpc_security_group_egress_rule" "allow_ec2_to_rds_private" {
   security_group_id            = aws_security_group.private_sg.id
   referenced_security_group_id = var.rds_sg_id
   from_port                    = 5432
@@ -58,6 +81,24 @@ resource "aws_vpc_security_group_egress_rule" "allow_ec2_to_rds" {
   tags = {
     Name = "${var.app_name}-allow-ec2-to-rds-egress-rule"
   }
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_ec2_to_rds_bastion" {
+  security_group_id            = aws_security_group.bastion_sg.id
+  referenced_security_group_id = var.rds_sg_id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
+  description                  = "Allow outbound traffic from EC2 Bastion Host to RDS instance"
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_bastion_https_outbound" {
+  security_group_id = aws_security_group.bastion_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  description       = "Allow outbound HTTPS traffic for SSM and other AWS services"
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_allow_all_outbound" {

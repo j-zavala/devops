@@ -10,17 +10,17 @@ variable "vpc_cidr_block" {
 
 variable "public_subnet_cidr_block" {
   type        = list(string)
-  description = "The CIDR block to use for the public subnet"
+  description = "The CIDR blocks to use for public subnets"
 }
 
 variable "private_subnet_cidr_block" {
   type        = list(string)
-  description = "The CIDR block to use for the private subnet"
+  description = "The CIDR blocks to use for private subnets"
 }
 
 variable "rds_subnet_cidr_block" {
-  type        = string
-  description = "The CIDR block to use for the RDS subnet"
+  type        = list(string)
+  description = "The CIDR blocks to use for RDS subnets"
 }
 
 variable "app_name" {

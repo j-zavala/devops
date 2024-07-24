@@ -8,6 +8,16 @@ output "private_instance_sg_id" {
   value       = aws_security_group.private_sg.id
 }
 
+output "bastion_instance_id" {
+  description = "ID of the created bastion host"
+  value       = aws_instance.bastion_host.id
+}
+
+output "bastion_sg_id" {
+  description = "ID of the bastion security group"
+  value       = aws_security_group.bastion_sg.id
+}
+
 output "iam_role_name" {
   description = "Name of the created IAM role"
   value       = aws_iam_role.private_ec2_role.name

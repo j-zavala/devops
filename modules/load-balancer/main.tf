@@ -5,8 +5,45 @@ resource "aws_lb" "load_balancer" {
   name               = "${var.app_name}-load-balancer"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [var.load_balancer_sg_id]
+  security_groups    = [aws_security_group.load_balancer_sg.id]
   subnets            = var.public_subnet_ids
+}
+
+# =========================================
+# Security Groups
+# =========================================
+
+# Load Balancer Security Group
+resource "aws_security_group" "load_balancer_sg" {
+  name        = "${var.app_name}-load-balancer-sg"
+  description = "Allows inbound HTTP from internet; then, outbound to private instances for request forwarding"
+  vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.app_name}-load-balancer-sg"
+  }
+}
+
+# =========================================
+# Security Group Rules
+# =========================================
+
+# Load Balancer Security Group Rules
+resource "aws_vpc_security_group_ingress_rule" "lb_allow_http_inbound_from_internet" {
+  security_group_id = aws_security_group.load_balancer_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 80
+  to_port           = 80
+  ip_protocol       = "tcp"
+  description       = "Allow HTTP inbound traffic from internet"
+}
+
+
+resource "aws_vpc_security_group_egress_rule" "lb_allow_all_outbound_to_private_instances" {
+  security_group_id = aws_security_group.load_balancer_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+  description       = "Allow all outbound traffic to private instances"
 }
 
 
@@ -18,7 +55,7 @@ resource "aws_lb_target_group" "target_group" {
   vpc_id   = var.vpc_id
 
   health_check {
-    path                = "/"
+    path                = "/hello"
     port                = "80"
     protocol            = "HTTP"
     interval            = 30

@@ -10,6 +10,6 @@ output "private_subnet_ids" {
   value = [for subnet in aws_subnet.private_subnet : subnet.id]
 }
 
-output "rds_subnet_id" {
-  value = aws_subnet.rds_subnet.id
+output "rds_subnet_ids" {
+  value = [for subnet in aws_subnet.rds_subnet : subnet.id]
 }

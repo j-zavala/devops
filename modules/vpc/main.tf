@@ -49,12 +49,13 @@ resource "aws_subnet" "private_subnet" {
 
 # RDS Subnet
 resource "aws_subnet" "rds_subnet" {
+  count             = 2
   vpc_id            = aws_vpc.main.id
-  cidr_block        = var.rds_subnet_cidr_block
-  availability_zone = data.aws_availability_zones.available.names[2]
+  cidr_block        = var.rds_subnet_cidr_block[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index + 2]
 
   tags = {
-    Name = "${var.app_name}-rds-subnet"
+    Name = "${var.app_name}-rds-subnet-${count.index + 1}"
   }
 }
 
@@ -169,6 +170,7 @@ resource "aws_route_table" "rds_route_table" {
 
 # RDS Subnet Route Table Association
 resource "aws_route_table_association" "rds_table_association" {
-  subnet_id      = aws_subnet.rds_subnet.id
+  count          = 2
+  subnet_id      = aws_subnet.rds_subnet[count.index].id
   route_table_id = aws_route_table.rds_route_table.id
 }

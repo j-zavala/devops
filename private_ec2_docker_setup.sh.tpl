@@ -2,9 +2,9 @@
 # Log everything
 exec > /var/log/user-data.log 2>&1
 
-# Update packages and install Docker
+# Update packages and install Docker, bind-utils, and netcat
 sudo dnf update -y
-sudo dnf install -y docker
+sudo dnf install -y docker bind-utils nc
 sudo systemctl enable docker
 sudo systemctl start docker
 
