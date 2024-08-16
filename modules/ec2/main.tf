@@ -108,6 +108,16 @@ resource "aws_vpc_security_group_egress_rule" "private_allow_all_outbound" {
   description       = "Allow all outbound traffic"
 }
 
+# Allow frontend to communicate with backend on port 3001
+resource "aws_vpc_security_group_ingress_rule" "allow_internal_communication" {
+  security_group_id = aws_security_group.private_sg.id
+  from_port         = 3001
+  to_port           = 3001
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "172.17.0.0/16" # Docker's default bridge network
+  description       = "Allow internal communication between containers"
+}
+
 # =========================================
 # IAM Role and Instance Profile
 # =========================================

@@ -55,7 +55,7 @@ resource "aws_lb_target_group" "target_group" {
   vpc_id   = var.vpc_id
 
   health_check {
-    path                = "/hello"
+    path                = "/api/hello"
     port                = "80"
     protocol            = "HTTP"
     interval            = 30

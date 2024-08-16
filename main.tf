@@ -31,6 +31,13 @@ module "vpc" {
   rds_subnet_cidr_block     = var.rds_subnet_cidr_block
 }
 
+# ECR
+module "ecr" {
+  source = "./modules/ecr"
+
+  app_name = var.app_name
+}
+
 # RDS
 module "rds" {
   source = "./modules/rds"
